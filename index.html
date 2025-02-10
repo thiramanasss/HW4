@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบจัดการตารางนัดหมาย</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-lg mx-auto bg-white p-6 rounded-lg shadow-md">
+    <h2 class="text-xl font-bold mb-4">จัดการตารางนัดหมาย</h2>
+    <form id="appointment-form" class="mb-4">
+      <input type="text" id="title" placeholder="หัวข้อ" class="w-full p-2 mb-2 border rounded">
+      <input type="date" id="date" class="w-full p-2 mb-2 border rounded">
+      <input type="time" id="startTime" placeholder="เวลาเริ่มต้น" class="w-full p-2 mb-2 border rounded">
+      <input type="time" id="endTime" placeholder="เวลาสิ้นสุด" class="w-full p-2 mb-2 border rounded">
+      <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded">เพิ่มนัดหมาย</button>
+    </form>
+    <h3 class="text-lg font-bold mb-2">รายการนัดหมาย</h3>
+    <ul id="appointment-list" class="space-y-2"></ul>
+  </div>
+  <script>
+    document.getElementById('appointment-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+      const title = document.getElementById('title').value;
+      const date = document.getElementById('date').value;
+      const startTime = document.getElementById('startTime').value;
+      const endTime = document.getElementById('endTime').value;
+      const appointment = { id: Date.now(), title, date, startTime, endTime, status: "confirmed" };
+      let appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+      appointments.push(appointment);
+      localStorage.setItem('appointments', JSON.stringify(appointments));
+      displayAppointments();
+      this.reset();
+    });
+
+    function displayAppointments() {
+      const appointmentList = document.getElementById('appointment-list');
+      appointmentList.innerHTML = '';
+      const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+      const today = new Date().toISOString().split('T')[0];
+      appointments.filter(app => app.date >= today).forEach(app => {
+        const li = document.createElement('li');
+        li.className = "flex items-center justify-between p-2 bg-gray-50 border rounded";
+        const span = document.createElement('span');
+        span.textContent = `${app.date} ${app.startTime}-${app.endTime}: ${app.title} (${app.status})`;
+        li.appendChild(span);
+        if(app.status === "confirmed") {
+          const cancelBtn = document.createElement('button');
+          cancelBtn.textContent = "ยกเลิก";
+          cancelBtn.className = "bg-red-500 text-white px-2 py-1 rounded";
+          cancelBtn.onclick = function() {
+            cancelAppointment(app.id);
+          };
+          li.appendChild(cancelBtn);
+        }
+        appointmentList.appendChild(li);
+      });
+    }
+
+    function cancelAppointment(id) {
+      let appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+      appointments = appointments.map(app => {
+        if(app.id === id) {
+          app.status = "ยกเลิก";
+        }
+        return app;
+      });
+      localStorage.setItem('appointments', JSON.stringify(appointments));
+      displayAppointments();
+    }
+
+    displayAppointments();
+  </script>
+</body>
+</html>
